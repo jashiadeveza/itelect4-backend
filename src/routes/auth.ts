@@ -11,8 +11,8 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 
 function createToken(userId: string): string {
   const secret = process.env.JWT_SECRET;
-  if (!secret) {
-    throw new Error("JWT_SECRET is not configured");
+  if (!secret || secret.length < 32) {
+    throw new Error("JWT_SECRET must be configured with at least 32 characters");
   }
 
   return jwt.sign({}, secret, { subject: userId, expiresIn: "1h" });

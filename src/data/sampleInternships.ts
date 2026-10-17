@@ -19,4 +19,40 @@ export const sampleInternships: InternshipCreateInput[] = [
     location: "Makati City",
     availableSlots: 3,
   },
+  {
+    company: "Microsoft",
+    position: "Software Engineering Intern",
+    location: "Makati City",
+    availableSlots: 4,
+  },
+  {
+    company: "Globe Telecom",
+    position: "Data Analyst Intern",
+    location: "Taguig City",
+    availableSlots: 3,
+  },
+  {
+    company: "Maya",
+    position: "Cybersecurity Intern",
+    location: "Manila",
+    availableSlots: 2,
+  },
+  {
+    company: "Canva",
+    position: "UI/UX Design Intern",
+    location: "Makati City",
+    availableSlots: 2,
+  },
+  {
+    company: "Shopee",
+    position: "Mobile App Developer Intern",
+    location: "Taguig City",
+    availableSlots: 3,
+  },
+  {
+    company: "PLDT",
+    position: "Network Engineering Intern",
+    location: "Quezon City",
+    availableSlots: 4,
+  },
 ];

@@ -1,4 +1,4 @@
-import { model, Schema } from "mongoose";
+import { model, Schema, type InferSchemaType } from "mongoose";
 
 const internshipSchema = new Schema(
   {
@@ -27,7 +27,18 @@ const internshipSchema = new Schema(
       validate: Number.isInteger,
     },
   },
-  { timestamps: true },
+  {
+    timestamps: true,
+    toJSON: {
+      versionKey: false,
+      transform: (_document, returnedObject) => {
+        const { _id, __v, ...internship } = returnedObject;
+        void __v;
+        return { ...internship, id: _id.toString() };
+      },
+    },
+  },
 );
 
+export type InternshipRecord = InferSchemaType<typeof internshipSchema>;
 export const InternshipModel = model("Internship", internshipSchema);

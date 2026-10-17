@@ -1,5 +1,8 @@
 import { Router, type Request, type Response } from "express";
+import { Types } from "mongoose";
+import { ApplicantModel } from "../models/Applicant.js";
 import { ApplicationModel } from "../models/Application.js";
+import { InternshipModel } from "../models/Internship.js";
 import { authenticate } from "../middleware/auth.js";
 import {
   ApplicationStatus,
@@ -36,7 +39,10 @@ function parseApplicationInput(
   const result: Partial<ApplicationCreateInput> = {};
   const fields = ["applicantId", "internshipId", "status"] as const;
 
-  if (!partial && fields.some((field) => !(field in value))) {
+  if (
+    !partial &&
+    ["applicantId", "internshipId"].some((field) => !(field in value))
+  ) {
     return undefined;
   }
 
@@ -54,12 +60,7 @@ function parseApplicationInput(
       continue;
     }
 
-    if (
-      typeof fieldValue !== "number" ||
-      !Number.isInteger(fieldValue) ||
-      fieldValue < 1 ||
-      fieldValue > 1_000_000
-    ) {
+    if (typeof fieldValue !== "string" || !Types.ObjectId.isValid(fieldValue)) {
       return undefined;
     }
 
@@ -108,12 +109,25 @@ applicationsRouter.post("/", async (req, res) => {
   if (!input) {
     res.status(400).json({
       message:
-        "Provide applicantId and internshipId from 1 to 1000000 and a valid application status",
+        "Provide valid applicantId and internshipId values",
     });
     return;
   }
 
-  const application = await ApplicationModel.create({ ...input, userId });
+  const [applicant, internship] = await Promise.all([
+    ApplicantModel.findOne({ _id: input.applicantId, userId }),
+    InternshipModel.findById(input.internshipId),
+  ]);
+  if (!applicant || !internship) {
+    res.status(400).json({ message: "The applicant or internship does not exist" });
+    return;
+  }
+
+  const application = await ApplicationModel.create({
+    ...input,
+    status: input.status ?? ApplicationStatus.Pending,
+    userId,
+  });
   res.status(201).json(application);
 });
 
@@ -125,6 +139,21 @@ applicationsRouter.put("/:id", async (req, res) => {
   if (!updates) {
     res.status(400).json({ message: "Provide valid application fields to update" });
     return;
+  }
+
+  if (updates.applicantId || updates.internshipId) {
+    const [applicant, internship] = await Promise.all([
+      updates.applicantId
+        ? ApplicantModel.findOne({ _id: updates.applicantId, userId })
+        : Promise.resolve(true),
+      updates.internshipId
+        ? InternshipModel.findById(updates.internshipId)
+        : Promise.resolve(true),
+    ]);
+    if (!applicant || !internship) {
+      res.status(400).json({ message: "The applicant or internship does not exist" });
+      return;
+    }
   }
 
   const application = await ApplicationModel.findOneAndUpdate(

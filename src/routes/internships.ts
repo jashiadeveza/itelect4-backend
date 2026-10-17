@@ -1,4 +1,5 @@
 import { Router } from "express";
+import { Types } from "mongoose";
 import { InternshipModel } from "../models/Internship.js";
 import { authenticate } from "../middleware/auth.js";
 import type { InternshipCreateInput } from "../types/index.js";
@@ -37,12 +38,26 @@ function parseInternshipInput(value: unknown): InternshipCreateInput | undefined
   };
 }
 
-internshipsRouter.use(authenticate);
-
 internshipsRouter.get("/", async (_req, res) => {
   const internships = await InternshipModel.find().sort({ createdAt: -1 });
   res.json(internships);
 });
+
+internshipsRouter.get("/:id", async (req, res) => {
+  if (!Types.ObjectId.isValid(req.params.id)) {
+    res.status(400).json({ message: "Invalid internship identifier" });
+    return;
+  }
+
+  const internship = await InternshipModel.findById(req.params.id);
+  if (!internship) {
+    res.status(404).json({ message: "Internship not found" });
+    return;
+  }
+  res.json(internship);
+});
+
+internshipsRouter.use(authenticate);
 
 internshipsRouter.post("/", async (req, res) => {
   const input = parseInternshipInput(req.body);

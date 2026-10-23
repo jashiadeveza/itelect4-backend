@@ -10,7 +10,7 @@ export const aiReviewRequestSchema = z.object({
 
 export const aiReviewReplySchema = z.object({
   summary: z.string().min(1).max(500),
-  strengths: z.array(z.string().min(1).max(200)).min(1).max(5),
+  strengths: z.array(z.string().min(1).max(200)).max(5),
   improvementAreas: z.array(z.string().min(1).max(200)).max(5),
   recommendation: z.enum([
     "strong_match",

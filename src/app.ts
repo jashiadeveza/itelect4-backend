@@ -12,13 +12,11 @@ const configuredOrigins = (process.env.CORS_ORIGIN ?? "")
   .split(",")
   .map((origin) => origin.trim())
   .filter(Boolean);
-const allowedOrigins = new Set(
-  configuredOrigins.length > 0
-    ? configuredOrigins
-    : process.env.NODE_ENV === "production"
-      ? []
-      : ["http://localhost:5173"],
-);
+const allowedOrigins = new Set([
+  ...configuredOrigins,
+  "https://itelect4-project-eight.vercel.app",
+  ...(process.env.NODE_ENV === "production" ? [] : ["http://localhost:5173"]),
+]);
 
 const app = express();
 

@@ -1,5 +1,28 @@
 import { z } from "zod";
 
+export const aiReviewRequestSchema = z.object({
+  prompt: z
+    .string()
+    .trim()
+    .min(20, "Describe the applicant or internship in at least 20 characters")
+    .max(2000, "Keep your description to 2000 characters or fewer"),
+}).strict();
+
+export const aiReviewReplySchema = z.object({
+  summary: z.string().min(1).max(500),
+  strengths: z.array(z.string().min(1).max(200)).min(1).max(5),
+  improvementAreas: z.array(z.string().min(1).max(200)).max(5),
+  recommendation: z.enum([
+    "strong_match",
+    "potential_match",
+    "needs_more_information",
+  ]),
+}).strict();
+
+export type AiReviewReply = z.infer<typeof aiReviewReplySchema>;
+
+export const aiReviewReplyJsonSchema = z.toJSONSchema(aiReviewReplySchema);
+
 export const aiRequestSchema = z.object({
   applicantId: z
     .string()

@@ -4,10 +4,11 @@ import { ApiError } from "@google/genai";
 import {
   AiReplyError,
   recommendInternships,
+  reviewApplication,
   type InternshipOption,
 } from "../ai/gemini.js";
 import type { AiRecommendation } from "../types/index.js";
-import { aiRequestSchema } from "../schemas/review.js";
+import { aiRequestSchema, aiReviewRequestSchema } from "../schemas/review.js";
 import { ApplicantModel } from "../models/Applicant.js";
 import { ApplicationModel } from "../models/Application.js";
 import { InternshipModel } from "../models/Internship.js";
@@ -37,11 +38,52 @@ const aiLimiter = rateLimit({
   standardHeaders: "draft-8",
   legacyHeaders: false,
   message: {
-    message: "Five internship recommendation requests a minute is the limit. Try again shortly.",
+    message: "Five AI requests a minute is the limit. Try again shortly.",
   },
 });
 
 aiRouter.use(aiLimiter);
+
+aiRouter.post("/", async (req, res) => {
+  const parsedBody = aiReviewRequestSchema.safeParse(req.body);
+  if (!parsedBody.success) {
+    res.status(400).json({
+      message: "Enter between 20 and 2000 characters for the AI review.",
+      errors: parsedBody.error.issues.map((issue) => issue.message),
+    });
+    return;
+  }
+
+  try {
+    const reply = await reviewApplication(parsedBody.data.prompt);
+    res.json(reply);
+  } catch (error) {
+    if (error instanceof ApiError && error.status === 429) {
+      res.status(429).json({
+        message: "The AI quota is used up for now. Try again later.",
+      });
+      return;
+    }
+
+    if (error instanceof ApiError || error instanceof AiReplyError) {
+      console.error(error);
+      res.status(502).json({
+        message: "The AI service did not answer properly. Try again.",
+      });
+      return;
+    }
+
+    if (error instanceof Error && error.message.includes("GEMINI_API_KEY")) {
+      console.error(error);
+      res.status(503).json({
+        message: "AI reviews are temporarily unavailable because the service is not configured.",
+      });
+      return;
+    }
+
+    throw error;
+  }
+});
 
 aiRouter.post("/recommendations", async (req, res) => {
   const userId = getUserId(req, res);

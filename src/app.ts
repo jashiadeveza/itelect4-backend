@@ -1,14 +1,34 @@
 import cors from "cors";
 import express, { type ErrorRequestHandler } from "express";
 import mongoose from "mongoose";
+import { aiRouter } from "./routes/ai.js";
+import { connectDatabase } from "./middleware/connectDatabase.js";
+import { applicantsRouter } from "./routes/applicants.js";
 import { applicationsRouter } from "./routes/applications.js";
 import { authRouter } from "./routes/auth.js";
 import { internshipsRouter } from "./routes/internships.js";
 
-export const app = express();
+const configuredOrigins = (process.env.CORS_ORIGIN ?? "")
+  .split(",")
+  .map((origin) => origin.trim())
+  .filter(Boolean);
+const allowedOrigins = new Set([
+  ...configuredOrigins,
+  "https://itelect4-project-eight.vercel.app",
+  ...(process.env.NODE_ENV === "production" ? [] : ["http://localhost:5173"]),
+]);
 
-app.use(cors());
+const app = express();
+
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      callback(null, !origin || allowedOrigins.has(origin));
+    },
+  }),
+);
 app.use(express.json());
+app.use("/api", connectDatabase);
 
 app.get("/api/health", (_req, res) => {
   res.status(200).json({
@@ -18,6 +38,8 @@ app.get("/api/health", (_req, res) => {
 });
 
 app.use("/api/auth", authRouter);
+app.use("/api/ai", aiRouter);
+app.use("/api/applicants", applicantsRouter);
 app.use("/api/applications", applicationsRouter);
 app.use("/api/internships", internshipsRouter);
 
@@ -28,6 +50,7 @@ app.use((req, res) => {
 });
 
 const handleError: ErrorRequestHandler = (error, _req, res, _next) => {
+  void _next;
   if (error instanceof mongoose.Error.ValidationError) {
     res.status(400).json({ message: error.message });
     return;
@@ -53,3 +76,5 @@ const handleError: ErrorRequestHandler = (error, _req, res, _next) => {
 };
 
 app.use(handleError);
+
+export default app;

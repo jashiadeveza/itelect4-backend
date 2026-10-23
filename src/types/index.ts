@@ -1,5 +1,5 @@
 export interface Applicant {
-  id: number;
+  id: string;
   name: string;
   email: string;
   role: "student" | "admin" | "instructor";
@@ -8,7 +8,7 @@ export interface Applicant {
 }
 
 export interface Internship {
-  id: number;
+  id: string;
   company: string;
   position: string;
   location: string;
@@ -17,11 +17,16 @@ export interface Internship {
 }
 
 export interface Application {
-  id: number;
-  applicantId: number;
-  internshipId: number;
+  id: string;
+  applicantId: string;
+  internshipId: string;
   status: ApplicationStatusValue;
   createdAt: string;
+}
+
+export interface AiRecommendation {
+  internshipId: string;
+  reason: string;
 }
 
 export type ApplicantCreateInput = Omit<Applicant, "id" | "createdAt"> & {
@@ -49,15 +54,16 @@ export const Role = {
   Instructor: "instructor",
 } as const;
 
-export type ApplicationCreateInput = Omit<
+export type ApplicationCreateInput = Pick<
   Application,
-  "id" | "createdAt" | "status"
+  "applicantId" | "internshipId"
 > & {
-  status: ApplicationStatusValue;
-  createdAt?: string;
+  status?: ApplicationStatusValue;
 };
 
-export type ApplicationUpdate = Partial<ApplicationCreateInput>;
+export type ApplicationUpdate = Partial<
+  Pick<Application, "applicantId" | "internshipId" | "status">
+>;
 
 export type ApplicantUpdate = Partial<Applicant>;
 export type ApplicantPreview = Pick<Applicant, "id" | "name" | "role">;

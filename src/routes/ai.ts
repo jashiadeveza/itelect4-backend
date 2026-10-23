@@ -65,6 +65,14 @@ aiRouter.post("/", async (req, res) => {
       return;
     }
 
+    if (error instanceof ApiError && error.status === 503) {
+      console.error(error);
+      res.status(503).json({
+        message: "The AI service is temporarily busy. Please try again in a moment.",
+      });
+      return;
+    }
+
     if (error instanceof ApiError || error instanceof AiReplyError) {
       console.error(error);
       res.status(502).json({

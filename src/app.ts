@@ -12,13 +12,11 @@ const configuredOrigins = (process.env.CORS_ORIGIN ?? "")
   .split(",")
   .map((origin) => origin.trim())
   .filter(Boolean);
-const allowedOrigins = new Set(
-  configuredOrigins.length > 0
-    ? configuredOrigins
-    : process.env.NODE_ENV === "production"
-      ? []
-      : ["http://localhost:5173"],
-);
+const allowedOrigins = new Set([
+  ...configuredOrigins,
+  "https://itelect4-project-eight.vercel.app",
+  ...(process.env.NODE_ENV === "production" ? [] : ["http://localhost:5173"]),
+]);
 
 const app = express();
 
@@ -53,6 +51,17 @@ app.use((req, res) => {
 
 const handleError: ErrorRequestHandler = (error, _req, res, _next) => {
   void _next;
+  if (
+    typeof error === "object" &&
+    error !== null &&
+    (("type" in error && error.type === "entity.parse.failed") ||
+      ("status" in error && error.status === 400) ||
+      ("statusCode" in error && error.statusCode === 400))
+  ) {
+    res.status(400).json({ message: "Request body must be valid JSON" });
+    return;
+  }
+
   if (error instanceof mongoose.Error.ValidationError) {
     res.status(400).json({ message: error.message });
     return;

@@ -1,10 +1,21 @@
 import { GoogleGenAI, type Content } from "@google/genai";
 import {
+  aiReviewReplyJsonSchema,
+  aiReviewReplySchema,
   internshipRecommendationsJsonSchema,
   internshipRecommendationsSchema,
+  type AiReviewReply,
 } from "../schemas/review.js";
 import type { AiRecommendation } from "../types/index.js";
-import { EXAMPLES, MODEL, SYSTEM_PROMPT, wrap } from "./prompt.js";
+import {
+  EXAMPLES,
+  MODEL,
+  REVIEW_EXAMPLES,
+  REVIEW_SYSTEM_PROMPT,
+  SYSTEM_PROMPT,
+  wrap,
+  wrapReview,
+} from "./prompt.js";
 
 export interface InternshipOption {
   id: string;
@@ -114,4 +125,56 @@ export async function recommendInternships(
     internshipId,
     reason: reason.trim(),
   }));
+}
+
+export async function reviewApplication(
+  prompt: string,
+): Promise<AiReviewReply> {
+  const contents: Content[] = [
+    ...REVIEW_EXAMPLES.flatMap((example) => [
+      {
+        role: "user",
+        parts: [{ text: wrapReview(example.submission) }],
+      },
+      {
+        role: "model",
+        parts: [{ text: JSON.stringify(example.reply) }],
+      },
+    ]),
+    { role: "user", parts: [{ text: wrapReview(prompt) }] },
+  ];
+
+  const response = await getClient().models.generateContent({
+    model: MODEL,
+    contents,
+    config: {
+      systemInstruction: REVIEW_SYSTEM_PROMPT,
+      responseMimeType: "application/json",
+      responseJsonSchema: aiReviewReplyJsonSchema,
+    },
+  });
+
+  const text = response.text;
+  if (!text) {
+    throw new AiReplyError("Gemini sent back no text");
+  }
+
+  let data: unknown;
+  try {
+    data = JSON.parse(text);
+  } catch {
+    throw new AiReplyError("Gemini's reply was not JSON");
+  }
+
+  const result = aiReviewReplySchema.safeParse(data);
+  if (!result.success) {
+    throw new AiReplyError("Gemini's reply did not match the review schema");
+  }
+
+  return {
+    ...result.data,
+    summary: result.data.summary.trim(),
+    strengths: result.data.strengths.map((strength) => strength.trim()),
+    improvementAreas: result.data.improvementAreas.map((area) => area.trim()),
+  };
 }

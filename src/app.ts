@@ -51,6 +51,16 @@ app.use((req, res) => {
 
 const handleError: ErrorRequestHandler = (error, _req, res, _next) => {
   void _next;
+  if (
+    typeof error === "object" &&
+    error !== null &&
+    "type" in error &&
+    error.type === "entity.parse.failed"
+  ) {
+    res.status(400).json({ message: "Request body must be valid JSON" });
+    return;
+  }
+
   if (error instanceof mongoose.Error.ValidationError) {
     res.status(400).json({ message: error.message });
     return;

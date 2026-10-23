@@ -52,10 +52,9 @@ app.use((req, res) => {
 const handleError: ErrorRequestHandler = (error, _req, res, _next) => {
   void _next;
   if (
-    typeof error === "object" &&
-    error !== null &&
-    "type" in error &&
-    error.type === "entity.parse.failed"
+    error instanceof SyntaxError &&
+    (("status" in error && error.status === 400) ||
+      ("statusCode" in error && error.statusCode === 400))
   ) {
     res.status(400).json({ message: "Request body must be valid JSON" });
     return;

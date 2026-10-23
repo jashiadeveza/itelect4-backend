@@ -24,6 +24,11 @@ export interface Application {
   createdAt: string;
 }
 
+export interface AiRecommendation {
+  internshipId: string;
+  reason: string;
+}
+
 export type ApplicantCreateInput = Omit<Applicant, "id" | "createdAt"> & {
   createdAt?: string;
 };

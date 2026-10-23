@@ -1,6 +1,7 @@
 import cors from "cors";
 import express, { type ErrorRequestHandler } from "express";
 import mongoose from "mongoose";
+import { aiRouter } from "./routes/ai.js";
 import { connectDatabase } from "./middleware/connectDatabase.js";
 import { applicantsRouter } from "./routes/applicants.js";
 import { applicationsRouter } from "./routes/applications.js";
@@ -39,6 +40,7 @@ app.get("/api/health", (_req, res) => {
 });
 
 app.use("/api/auth", authRouter);
+app.use("/api/ai", aiRouter);
 app.use("/api/applicants", applicantsRouter);
 app.use("/api/applications", applicationsRouter);
 app.use("/api/internships", internshipsRouter);

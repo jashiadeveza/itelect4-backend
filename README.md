@@ -8,6 +8,10 @@ Backend API: https://itelect4-backend-topaz.vercel.app
 
 Frontend Application: https://itelect4-project-eight.vercel.app
 
+Backend Repo: https://github.com/jashiadeveza/itelect4-backend
+
+Frontend Repo: https://github.com/jashiadeveza/itelect4-project
+
 Backend Repository: itelect4-backend
 
 🛠️ Technologies Used

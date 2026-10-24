@@ -15,7 +15,7 @@ export interface Example {
   recommendations: InternshipRecommendations;
 }
 
-export const MODEL = "gemini-flash-latest";
+export const MODEL = "gemini-flash-lite-latest";
 
 export const REVIEW_SYSTEM_PROMPT = `
 You review internship applications for ITELECT4, an internship application management app.
